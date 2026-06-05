@@ -162,7 +162,7 @@ jobs:
           else
             BUCKET="${{ vars.PROD_BUCKET }}"
           fi
-          GCS_PATH="${BUCKET}/${VERSION}/RC${RC_NUM}/${AAB_NAME}"
+          GCS_PATH="$(echo -n "${BUCKET}" | tr -d '[:space:]')/${VERSION}/RC${RC_NUM}/${AAB_NAME}"
           echo "Uploading to: $GCS_PATH"
 
           # Fail if binary already exists — enforces the build-once guarantee.
