@@ -114,26 +114,19 @@ jobs:
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      # Retrieves the release keystore and its credentials from GCP Secret Manager.
-      # The keystore is stored base64-encoded; the password and alias are plain text.
-      # Secret names are placeholders — final names confirmed during GCP setup (Action 1.1).
-      # Note: the --//config:keystore_* flag types depend on config/BUILD.bazel from PR #6265.
-      - name: Provision release keystore from Secret Manager
+      # [INTEGRATION TEST ONLY] Provisions keystore from GitHub secrets instead of GCP Secret
+      # Manager (which requires billing). In production, this step uses Secret Manager.
+      # Production version: see PR1.2/build-and-sign-workflow-fresh branch.
+      - name: Provision release keystore from GitHub secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
         run: |
-          gcloud secrets versions access latest \
-            --secret="oppia-android-release-keystore" \
-            --format='get(payload.data)' \
-            | tr '_-' '/+' | base64 -d > /tmp/release_keystore.jks
-
-          gcloud secrets versions access latest \
-            --secret="oppia-android-release-keystore-password" \
-            > /tmp/keystore_password.txt
-
-          gcloud secrets versions access latest \
-            --secret="oppia-android-release-key-alias" \
-            > /tmp/key_alias.txt
-
-          echo "Keystore provisioned from Secret Manager."
+          echo "$KEYSTORE_BASE64" | base64 -d > /tmp/release_keystore.jks
+          echo "$KEYSTORE_PASSWORD" > /tmp/keystore_password.txt
+          echo "$KEY_ALIAS" > /tmp/key_alias.txt
+          echo "Keystore provisioned from GitHub secrets (integration test mode)."
 
       - name: Build signed AAB
         run: |
@@ -166,7 +159,8 @@ jobs:
       - name: Upload signed AAB to GCS archive
         run: |
           FLAVOR="${{ github.event.inputs.flavor }}"
-          GCS_PATH="gs://oppia-android-${FLAVOR}-releases/${VERSION}/RC${RC_NUM}/${AAB_NAME}"
+          # [INTEGRATION TEST ONLY] Using personal GCS bucket. Production bucket: oppia-android-${FLAVOR}-releases
+          GCS_PATH="gs://sandesh-oppia-android-${FLAVOR}-releases/${VERSION}/RC${RC_NUM}/${AAB_NAME}"
 
           # Fail if binary already exists — enforces the build-once guarantee.
           if gcloud storage ls "$GCS_PATH" 2>/dev/null; then
