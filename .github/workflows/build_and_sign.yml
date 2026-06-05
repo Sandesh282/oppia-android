@@ -117,34 +117,12 @@ jobs:
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      # [INTEGRATION TEST ONLY] Provisions keystore from GitHub secrets instead of GCP Secret
-      # Manager (which requires billing). In production, this step uses Secret Manager.
-      # Production version: see PR1.2/build-and-sign-workflow-fresh branch.
-      #
-      # Keystore files are written inside the workspace (config/) so they can be
-      # referenced as Bazel labels (//config:release_keystore.jks etc.) required
-      # by the label_flag types in config/BUILD.bazel from PR #6265.
-      - name: Provision release keystore from GitHub secrets
-        env:
-          KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
-        run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > config/release_keystore.jks
-          echo "$KEYSTORE_PASSWORD" > config/keystore_password.txt
-          echo "$KEY_ALIAS" > /tmp/key_alias.txt
-
-          # Expose the keystore files as Bazel targets so label_flag can reference them.
-          printf '\nexports_files(["release_keystore.jks", "keystore_password.txt"], visibility = ["//:oppia_binary_visibility"])\n' >> config/BUILD.bazel
-          echo "Keystore provisioned from GitHub secrets (integration test mode)."
-
+      # [INTEGRATION TEST ONLY] Uses the default debug keystore (@bazel_tools//tools/android:debug_keystore).
+      # Custom keystore passing via //config:keystore_* flags was already verified locally.
+      # This test focuses on: WIF auth, Bazel build + signing pipeline, GCS upload.
       - name: Build signed AAB
         run: |
-          KEY_ALIAS=$(cat /tmp/key_alias.txt)
           bazel build --compilation_mode=opt \
-            --//config:keystore_file=//config:release_keystore.jks \
-            --//config:keystore_password_file=//config:keystore_password.txt \
-            --//config:key_alias="$KEY_ALIAS" \
             -- //:oppia_${{ github.event.inputs.flavor }}
 
       # The _sign_and_rename_aab Bazel rule produces a signed AAB named:
