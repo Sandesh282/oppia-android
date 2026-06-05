@@ -108,8 +108,8 @@ jobs:
       - name: Authenticate to GCP via Workload Identity Federation
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.GCP_RELEASE_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_RELEASE_SERVICE_ACCOUNT }}
 
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -159,8 +159,15 @@ jobs:
       - name: Upload signed AAB to GCS archive
         run: |
           FLAVOR="${{ github.event.inputs.flavor }}"
-          # [INTEGRATION TEST ONLY] Using personal GCS bucket. Production bucket: oppia-android-${FLAVOR}-releases
-          GCS_PATH="gs://sandesh-oppia-android-${FLAVOR}-releases/${VERSION}/RC${RC_NUM}/${AAB_NAME}"
+          # [INTEGRATION TEST ONLY] Using personal GCS bucket via environment variable.
+          if [[ "$FLAVOR" == "alpha" ]]; then
+            BUCKET="${{ vars.ALPHA_BUCKET }}"
+          elif [[ "$FLAVOR" == "beta" ]]; then
+            BUCKET="${{ vars.BETA_BUCKET }}"
+          else
+            BUCKET="${{ vars.PROD_BUCKET }}"
+          fi
+          GCS_PATH="${BUCKET}/${VERSION}/RC${RC_NUM}/${AAB_NAME}"
 
           # Fail if binary already exists — enforces the build-once guarantee.
           if gcloud storage ls "$GCS_PATH" 2>/dev/null; then
