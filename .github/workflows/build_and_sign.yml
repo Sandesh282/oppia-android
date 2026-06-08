@@ -117,27 +117,16 @@ jobs:
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      # Fetches keystore and password from GCP Secret Manager and builds the signed AAB.
-      - name: Fetch keystore from GCP Secret Manager
-        run: |
-          gcloud secrets versions access latest \
-            --secret="${{ vars.KEYSTORE_SECRET_NAME }}" \
-            --format="get(payload.data)" | tr '_-' '/+' | base64 -d \
-            > /tmp/keystore.jks
-          gcloud secrets versions access latest \
-            --secret="${{ vars.KEYSTORE_PASSWORD_SECRET_NAME }}" \
-            > /tmp/keystore_password.txt
-          echo "Keystore provisioned."
-
+      # [INTEGRATION TEST] Uses debug keystore fallback built into Ben's signing rule.
+      # Ben's _sign_and_rename_aab automatically falls back to the debug keystore when
+      # no --//config:keystore_file flag is passed. This lets us verify the jarsigner
+      # fix works end-to-end without needing GCP Secret Manager secrets.
       - name: Build signed AAB
         run: |
           FLAVOR="${{ github.event.inputs.flavor }}"
           bazel build \
             --compilation_mode=opt \
             --disk_cache=$HOME/.bazel_cache \
-            --//config:keystore_file=/tmp/keystore.jks \
-            --//config:keystore_password_file=/tmp/keystore_password.txt \
-            --//config:key_alias="${{ vars.KEY_ALIAS }}" \
             //:oppia_${FLAVOR}
           echo "Build complete."
 
