@@ -136,14 +136,14 @@ jobs:
       - name: Locate signed AAB
         run: |
           FLAVOR="${{ github.event.inputs.flavor }}"
-          # _sign_and_rename_aab writes the signed AAB to bazel-bin/oppia_{flavor}_release/.
-          # Use -L to follow the bazel-bin symlink.
-          RELEASE_DIR="$(bazel info bazel-bin)/oppia_${FLAVOR}_release"
-          AAB_PATH=$(find -L "$(bazel info bazel-bin)" -name "oppia-android-*.aab" 2>/dev/null | head -1)
+          # Use the workspace-relative bazel-bin symlink directly — calling
+          # 'bazel info bazel-bin' in a separate step can resolve to a different
+          # output base than what was used during the build.
+          AAB_PATH=$(ls bazel-bin/oppia_${FLAVOR}_release/oppia-android-*.aab 2>/dev/null | head -1)
           if [[ -z "$AAB_PATH" ]]; then
-            echo "::error::Signed AAB not found under $(bazel info bazel-bin). Build may have failed."
-            echo "Contents of release dir:"
-            ls "$RELEASE_DIR" 2>/dev/null || echo "(empty or missing)"
+            echo "::error::Signed AAB not found in bazel-bin/oppia_${FLAVOR}_release/."
+            echo "Contents of bazel-bin:"
+            ls bazel-bin/ 2>/dev/null || echo "(bazel-bin not found)"
             exit 1
           fi
           AAB_NAME=$(basename "$AAB_PATH")
@@ -154,6 +154,7 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "RC_NUM=$RC_NUM" >> $GITHUB_ENV
           echo "Found: $AAB_NAME (version=$VERSION, RC=$RC_NUM)"
+
 
 
 
