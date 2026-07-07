@@ -99,6 +99,9 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
+      - name: Configure Bazel JVM heap limit
+        run: echo "startup --host_jvm_args=-Xmx6g" >> $HOME/.bazelrc
+
       - name: Build unsigned AAB
         run: |
           FLAVOR="${{ github.event.inputs.flavor }}"
@@ -115,8 +118,7 @@ jobs:
             --//config:download_license_texts=true \
             --//config:enable_firebase_analytics=true \
             --action_env=GOOGLE_APPLICATION_CREDENTIALS \
-            --host_jvm_args=-Xmx6g \
-            --local_ram_resources=HOST_RAM*.6
+            --local_ram_resources=8192
 
       # The Bazel rule renames (but does not sign) the AAB to:
       # oppia-android-{MAJOR}.{MINOR}-rc{RC}-{flavor}-{hash10}.aab
