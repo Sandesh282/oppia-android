@@ -112,11 +112,9 @@ jobs:
             //:oppia_${FLAVOR} \
             --//config:assets_type=${ASSETS_TYPE} \
             --//config:web_api_key_file=/tmp/prod_server.key \
-            --//config:download_firebase_config=true \
-            --//config:firebase_project_id=${{ secrets.FIREBASE_PROJECT_ID }} \
-            --//config:firebase_app_id=${{ secrets.FIREBASE_APP_ID }} \
-            --//config:download_license_texts=true \
-            --//config:enable_firebase_analytics=true \
+            --//config:download_firebase_config=false \
+            --//config:download_license_texts=false \
+            --//config:enable_firebase_analytics=false \
             --action_env=GOOGLE_APPLICATION_CREDENTIALS \
             --local_ram_resources=8192
 
