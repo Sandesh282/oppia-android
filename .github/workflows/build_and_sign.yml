@@ -101,14 +101,13 @@ jobs:
 
       # Step 1: compile everything into the Bazel cache. This is the memory-heavy phase.
       # Following the same two-step pattern used in regular binary build CI runs to avoid OOM.
+      # TEST ONLY: assets_type=dev skips network lesson downloads (no prod server key on fork).
       - name: Build unsigned AAB (compile)
         run: |
           FLAVOR="${{ github.event.inputs.flavor }}"
-          ASSETS_TYPE=$([ "$FLAVOR" = "alpha" ] && echo "alpha" || echo "prod")
           bazel build --compilation_mode=opt \
             //:oppia_${FLAVOR} \
-            --//config:assets_type=${ASSETS_TYPE} \
-            --//config:web_api_key_file=/tmp/prod_server.key \
+            --//config:assets_type=dev \
             --//config:download_firebase_config=false \
             --//config:download_license_texts=false \
             --//config:enable_firebase_analytics=false \
@@ -123,11 +122,9 @@ jobs:
       - name: Build unsigned AAB (finish)
         run: |
           FLAVOR="${{ github.event.inputs.flavor }}"
-          ASSETS_TYPE=$([ "$FLAVOR" = "alpha" ] && echo "alpha" || echo "prod")
           bazel build --compilation_mode=opt \
             //:oppia_${FLAVOR} \
-            --//config:assets_type=${ASSETS_TYPE} \
-            --//config:web_api_key_file=/tmp/prod_server.key \
+            --//config:assets_type=dev \
             --//config:download_firebase_config=false \
             --//config:download_license_texts=false \
             --//config:enable_firebase_analytics=false \
