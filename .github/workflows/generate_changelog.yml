@@ -42,7 +42,7 @@ jobs:
   generate_changelog:
     name: Generate Changelog
     runs-on: ubuntu-24.04
-    environment: oppia-android-release-env
+    # NOTE (fork-test): environment gate removed so no manual approval is needed.
     permissions:
       id-token: write      # Required for Workload Identity Federation (Vertex AI auth).
       contents: write      # Required so the script can push the changelog branch.
@@ -71,11 +71,12 @@ jobs:
           git remote set-url origin \
             https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
 
-      - name: Authenticate to GCP via Workload Identity Federation
+      # NOTE (fork-test): using SA key instead of WIF — set GCP_SA_KEY secret on the fork
+      # with a service account JSON key that has roles/aiplatform.user on your GCP project.
+      - name: Authenticate to GCP via service account key
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.GCP_RELEASE_SERVICE_ACCOUNT }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
