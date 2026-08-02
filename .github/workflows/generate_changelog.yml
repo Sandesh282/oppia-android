@@ -89,9 +89,13 @@ jobs:
           ACCESS_TOKEN="$(gcloud auth print-access-token)"
           echo "::add-mask::$ACCESS_TOKEN"
           echo "GCP_ACCESS_TOKEN=$ACCESS_TOKEN" >> "$GITHUB_ENV"
+          
 
       - name: Set up Bazel
         uses: abhinavsingh/setup-bazel@v3
+
+      - name: Set up Android + Bazel build environment
+        uses: ./.github/actions/set-up-android-bazel-build-environment
 
       # Run the GenerateChangelogs script. It will:
       #   - Determine the version to generate for from version.bzl.
