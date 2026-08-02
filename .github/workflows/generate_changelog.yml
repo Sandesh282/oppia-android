@@ -93,6 +93,9 @@ jobs:
       - name: Set up Bazel
         uses: abhinavsingh/setup-bazel@v3
 
+      - name: Set up Android + Bazel build environment
+        uses: ./.github/actions/set-up-android-bazel-build-environment
+
       # Run the GenerateChangelogs script. It will:
       #   - Determine the version to generate for from version.bzl.
       #   - Collect commits between the two newest release branches.
